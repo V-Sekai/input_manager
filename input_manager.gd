@@ -3,9 +3,9 @@ tool
 
 const USER_PREFERENCES_SECTION_NAME = "input"
 
-var set_settings_value: FuncRef = FuncRef.new()
-var get_settings_value: FuncRef = FuncRef.new()
-var save_settings: FuncRef = FuncRef.new()
+var set_settings_value_callback: FuncRef = FuncRef.new()
+var get_settings_value_callback: FuncRef = FuncRef.new()
+var save_settings_callback: FuncRef = FuncRef.new()
 
 const DS4_Name: String = "Sony DualShock 4"
 const DS4_GUID: String = "4c05cc09000000000000504944564944"
@@ -273,8 +273,8 @@ func setup_meta_action_input_map() -> void:
 				InputMap.action_erase_event(action, input_event)
 
 func set_settings_value(p_key: String, p_value) -> void:
-	if set_settings_value.is_valid():
-		set_settings_value.call_func(USER_PREFERENCES_SECTION_NAME, p_key, p_value)
+	if set_settings_value_callback.is_valid():
+		set_settings_value_callback.call_func(USER_PREFERENCES_SECTION_NAME, p_key, p_value)
 
 func set_settings_values():
 	set_settings_value("invert_look_x", invert_look_x)
@@ -282,8 +282,8 @@ func set_settings_values():
 	set_settings_value("mouse_sensitivity", mouse_sensitivity)
 
 func get_settings_value(p_key: String, p_type: int, p_default):
-	if get_settings_value.is_valid():
-		return get_settings_value.call_func(USER_PREFERENCES_SECTION_NAME, p_key, p_type, p_default)
+	if get_settings_value_callback.is_valid():
+		return get_settings_value_callback.call_func(USER_PREFERENCES_SECTION_NAME, p_key, p_type, p_default)
 	else:
 		return p_default
 
@@ -296,16 +296,16 @@ func is_quitting() -> void:
 	set_settings_values()
 
 func assign_set_settings_value_funcref(p_instance: Object, p_function: String) -> void:
-	set_settings_value.set_instance(p_instance)
-	set_settings_value.set_function(p_function)
+	set_settings_value_callback.set_instance(p_instance)
+	set_settings_value_callback.set_function(p_function)
 	
 func assign_get_settings_value_funcref(p_instance: Object, p_function: String) -> void:
-	get_settings_value.set_instance(p_instance)
-	get_settings_value.set_function(p_function)
+	get_settings_value_callback.set_instance(p_instance)
+	get_settings_value_callback.set_function(p_function)
 	
 func assign_save_settings_funcref(p_instance: Object, p_function: String) -> void:
-	save_settings.set_instance(p_instance)
-	save_settings.set_function(p_function)
+	save_settings_callback.set_instance(p_instance)
+	save_settings_callback.set_function(p_function)
 
 func _ready() -> void:
 	if ! Engine.is_editor_hint():
