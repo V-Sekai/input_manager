@@ -20,6 +20,10 @@ var invert_look_x: bool = false
 var invert_look_y: bool = false
 var mouse_sensitivity: float = 50.0
 
+# The number of external requests for the blocking ingame action,
+# allows multiple systems to do so without conflict
+var ingame_input_blocks: int = 0
+
 # May want to make this configurable!
 const INPUT_UPDATE_RATE = 1.0 / 60
 var input_update_delta: float = 0.0
@@ -204,6 +208,45 @@ func set_active(p_active: bool) -> void:
 	if ! Engine.is_editor_hint():
 		set_process(p_active)
 		set_process_input(p_active)
+
+
+func decrement_ingame_input_block() -> void:
+	assert(ingame_input_blocks > 0)
+	ingame_input_blocks -= 1
+	if ingame_input_blocks == 0:
+		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+
+
+func increment_ingame_input_block() -> void:
+	if ingame_input_blocks == 0:
+		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+		
+	ingame_input_blocks += 1
+	
+func ingame_input_enabled() -> bool:
+	if ingame_input_blocks > 0:
+		return false
+	else:
+		return true
+		
+		
+func is_ingame_action_pressed(p_action: String) -> bool:
+	if ingame_input_enabled():
+		return Input.is_action_pressed(p_action)
+	else:
+		return false
+		
+func is_ingame_action_just_pressed(p_action: String) -> bool:
+	if ingame_input_enabled():
+		return Input.is_action_just_pressed(p_action)
+	else:
+		return false
+
+func is_ingame_action_just_released(p_action: String) -> bool:
+	if ingame_input_enabled():
+		return Input.is_action_just_released(p_action)
+	else:
+		return false
 
 
 func add_actions_for_input_device(p_device_id: int) -> void:
