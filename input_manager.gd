@@ -16,9 +16,26 @@ var connected_joypads: Dictionary = {}
 var input_meta_callback: Array = []
 var input_meta_actions: Dictionary = {}
 
-var invert_look_x: bool = false
-var invert_look_y: bool = false
-var mouse_sensitivity: float = 50.0
+var look_x_direction: float = 1.0
+var look_y_direction: float = 1.0
+
+func set_invert_look_x(p_invert_look_x: bool) -> void:
+	invert_look_x = p_invert_look_x
+	if p_invert_look_x:
+		look_x_direction = -1.0
+	else:
+		look_x_direction = 1.0
+		
+func set_invert_look_y(p_invert_look_y: bool) -> void:
+	invert_look_y = p_invert_look_y
+	if p_invert_look_y:
+		look_y_direction = 1.0
+	else:
+		look_y_direction = -1.0
+
+var invert_look_x: bool = false setget set_invert_look_x
+var invert_look_y: bool = false setget set_invert_look_y
+var mouse_sensitivity: float = 1.0
 
 # The number of external requests for the blocking ingame action,
 # allows multiple systems to do so without conflict
@@ -112,15 +129,10 @@ func _input(p_event: InputEvent) -> void:
 					current_axis.type == InputAxis.TYPE_MOUSE_MOTION
 					and (current_axis.axis == 0 or current_axis.axis == 1)
 				):
-					var value: float = axes_values[current_axis.name]
 					if current_axis.axis == 0:
-						axes_values[current_axis.name] = clamp(
-							value + p_event.relative.x * 0.001, -1.0, 1.0
-						)
+						axes_values[current_axis.name] = p_event.relative.x * current_axis.sensitivity * mouse_sensitivity
 					if current_axis.axis == 1:
-						axes_values[current_axis.name] = clamp(
-							value - p_event.relative.y * 0.001, -1.0, 1.0
-						)
+						axes_values[current_axis.name] = p_event.relative.y * current_axis.sensitivity * mouse_sensitivity
 
 
 func _process(p_delta: float) -> void:
@@ -353,9 +365,12 @@ func assign_save_settings_funcref(p_instance: Object, p_function: String) -> voi
 func _ready() -> void:
 	if ! Engine.is_editor_hint():
 		setup_meta_action_input_map()
-
+		
 		set_active(true)
-
+		
+		set_invert_look_x(invert_look_x)
+		set_invert_look_y(invert_look_y)
+		
 		if Input.get_connected_joypads().size() == 0:
 			pass  # No joypads connected
 		else:
