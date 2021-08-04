@@ -1,11 +1,11 @@
+@tool
 extends Node
-tool
 
 const USER_PREFERENCES_SECTION_NAME = "input"
 
-var set_settings_value_callback: FuncRef = FuncRef.new()
-var get_settings_value_callback: FuncRef = FuncRef.new()
-var save_settings_callback: FuncRef = FuncRef.new()
+var set_settings_value_callback: Callable = Callable()
+var get_settings_value_callback: Callable = Callable()
+var save_settings_callback: Callable = Callable()
 
 const DS4_Name: String = "Sony DualShock 4"
 const DS4_GUID: String = "4c05cc09000000000000504944564944"
@@ -33,8 +33,12 @@ func set_invert_look_y(p_invert_look_y: bool) -> void:
 	else:
 		look_y_direction = -1.0
 
-var invert_look_x: bool = false setget set_invert_look_x
-var invert_look_y: bool = false setget set_invert_look_y
+var invert_look_x: bool = false :
+	set = set_invert_look_x
+
+var invert_look_y: bool = false :
+	set = set_invert_look_y
+
 var mouse_sensitivity: float = 1.0
 
 # The number of external requests for the blocking ingame action,
@@ -53,7 +57,7 @@ static func get_joy_type_from_guid(p_guid: String):
 
 
 class JoyPadInfo:
-	enum { TYPE_XINPUT, TYPE_DUALSHOCK, TYPE_UNKNOWN }
+	const TYPE_UNKNOWN =2
 	var type: int = TYPE_UNKNOWN
 
 	func _init(p_type: int):
@@ -87,7 +91,7 @@ class InputAxis:
 		p_inverted: bool = false,
 		p_type: int = TYPE_ACTION,
 		p_axis: int = 0
-	) -> void:
+	):
 		name = p_name
 		positive_action = p_positive_action
 		negative_action = p_negative_action
@@ -177,7 +181,7 @@ func _joy_connection_changed(p_index: int, p_connected: bool) -> void:
 func _enter_tree() -> void:
 	if ! Engine.is_editor_hint():
 		var connect_result: int = Input.connect(
-			"joy_connection_changed", self, "_joy_connection_changed", [], CONNECT_DEFERRED
+			"joy_connection_changed", Callable(self, "_joy_connection_changed"), [], CONNECT_DEFERRED
 		)
 		if connect_result != OK:
 			printerr("joy_connection_changed: could not connect!")
@@ -185,8 +189,8 @@ func _enter_tree() -> void:
 
 func _exit_tree() -> void:
 	if ! Engine.is_editor_hint():
-		if Input.is_connected("joy_connection_changed", self, "_joy_connection_changed"):
-			Input.disconnect("joy_connection_changed", self, "_joy_connection_changed")
+		if Input.is_connected("joy_connection_changed", Callable(self, "_joy_connection_changed")):
+			Input.disconnect("joy_connection_changed", Callable(self, "_joy_connection_changed"))
 
 
 func add_new_axes(
@@ -263,7 +267,7 @@ func is_ingame_action_just_released(p_action: String) -> bool:
 
 func add_actions_for_input_device(p_device_id: int) -> void:
 	for callback in input_meta_callback:
-		var result = callback.call_func(p_device_id)
+		var result = callback.call(p_device_id)
 		if typeof(result) == TYPE_BOOL:
 			if ! result:
 				return
@@ -285,7 +289,7 @@ func add_actions_for_input_device(p_device_id: int) -> void:
 
 func remove_actions_for_input_device(p_device_id: int) -> void:
 	for callback in input_meta_callback:
-		var result = callback.call_func(p_device_id)
+		var result = callback.call(p_device_id)
 		if typeof(result) == TYPE_BOOL:
 			if ! result:
 				return
@@ -311,7 +315,7 @@ func remove_actions_for_input_device(p_device_id: int) -> void:
 
 
 func assign_input_map_validation_callback(p_node, p_function_name):
-	var func_ref: FuncRef = funcref(p_node, p_function_name)
+	var func_ref: Callable = Callable(p_node, p_function_name)
 	if func_ref.is_valid():
 		input_meta_callback.push_back(func_ref)
 
@@ -329,7 +333,7 @@ func setup_meta_action_input_map() -> void:
 
 func set_settings_value(p_key: String, p_value) -> void:
 	if set_settings_value_callback.is_valid():
-		set_settings_value_callback.call_func(USER_PREFERENCES_SECTION_NAME, p_key, p_value)
+		set_settings_value_callback.call(USER_PREFERENCES_SECTION_NAME, p_key, p_value)
 
 func set_settings_values():
 	set_settings_value("invert_look_x", invert_look_x)
@@ -338,26 +342,26 @@ func set_settings_values():
 
 func get_settings_value(p_key: String, p_type: int, p_default):
 	if get_settings_value_callback.is_valid():
-		return get_settings_value_callback.call_func(USER_PREFERENCES_SECTION_NAME, p_key, p_type, p_default)
+		return get_settings_value_callback.call(USER_PREFERENCES_SECTION_NAME, p_key, p_type, p_default)
 	else:
 		return p_default
 
 func get_settings_values() -> void:
 	invert_look_x = get_settings_value("invert_look_x", TYPE_BOOL, invert_look_x)
 	invert_look_y = get_settings_value("invert_look_y", TYPE_BOOL, invert_look_y)
-	mouse_sensitivity = get_settings_value("mouse_sensitivity", TYPE_REAL, mouse_sensitivity)
+	mouse_sensitivity = get_settings_value("mouse_sensitivity", TYPE_FLOAT, mouse_sensitivity)
 
 func is_quitting() -> void:
 	set_settings_values()
 
 func assign_set_settings_value_funcref(p_instance: Object, p_function: String) -> void:
-	set_settings_value_callback = funcref(p_instance, p_function)
+	set_settings_value_callback = Callable(p_instance, p_function)
 	
 func assign_get_settings_value_funcref(p_instance: Object, p_function: String) -> void:
-	get_settings_value_callback = funcref(p_instance, p_function)
+	get_settings_value_callback = Callable(p_instance, p_function)
 	
 func assign_save_settings_funcref(p_instance: Object, p_function: String) -> void:
-	save_settings_callback = funcref(p_instance, p_function)
+	save_settings_callback = Callable(p_instance, p_function)
 
 func _ready() -> void:
 	if ! Engine.is_editor_hint():
