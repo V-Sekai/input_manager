@@ -322,7 +322,7 @@ func assign_input_map_validation_callback(p_node, p_function_name):
 
 func setup_meta_action_input_map() -> void:
 	for action in InputMap.get_actions():
-		var event_list: Array = InputMap.get_action_list(action)
+		var event_list: Array = InputMap.action_get_events(action)
 		input_meta_actions[action] = []
 		for input_event in event_list:
 			if input_event is InputEventJoypadButton or input_event is InputEventJoypadMotion:
