@@ -19,6 +19,8 @@ var input_meta_actions: Dictionary = {}
 var look_x_direction: float = 1.0
 var look_y_direction: float = 1.0
 
+const mouse_sensitivity_multiple: float = 10
+
 func set_invert_look_x(p_invert_look_x: bool) -> void:
 	invert_look_x = p_invert_look_x
 	if p_invert_look_x:
@@ -134,9 +136,9 @@ func _input(p_event: InputEvent) -> void:
 					and (current_axis.axis == 0 or current_axis.axis == 1)
 				):
 					if current_axis.axis == 0:
-						axes_values[current_axis.name] = p_event.relative.x * current_axis.sensitivity * mouse_sensitivity
+						axes_values[current_axis.name] = p_event.relative.x * current_axis.sensitivity * mouse_sensitivity * mouse_sensitivity_multiple
 					if current_axis.axis == 1:
-						axes_values[current_axis.name] = p_event.relative.y * current_axis.sensitivity * mouse_sensitivity
+						axes_values[current_axis.name] = p_event.relative.y * current_axis.sensitivity * mouse_sensitivity * mouse_sensitivity_multiple
 
 
 func _process(p_delta: float) -> void:
