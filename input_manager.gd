@@ -182,17 +182,15 @@ func _joy_connection_changed(p_index: int, p_connected: bool) -> void:
 
 func _enter_tree() -> void:
 	if ! Engine.is_editor_hint():
-		var connect_result: int = Input.connect(
-			"joy_connection_changed", Callable(self, "_joy_connection_changed"), [], CONNECT_DEFERRED
-		)
+		var connect_result: int = Input.joy_connection_changed.connect(self._joy_connection_changed, CONNECT_DEFERRED)
 		if connect_result != OK:
 			printerr("joy_connection_changed: could not connect!")
 
 
 func _exit_tree() -> void:
 	if ! Engine.is_editor_hint():
-		if Input.is_connected("joy_connection_changed", Callable(self, "_joy_connection_changed")):
-			Input.disconnect("joy_connection_changed", Callable(self, "_joy_connection_changed"))
+		if Input.joy_connection_changed.is_connected(self._joy_connection_changed):
+			Input.joy_connection_changed.disconnect(self._joy_connection_changed)
 
 
 func add_new_axes(
