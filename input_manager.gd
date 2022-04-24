@@ -296,7 +296,7 @@ func remove_actions_for_input_device(p_device_id: int) -> void:
 
 	for action in InputMap.get_actions():
 		if input_meta_actions.has(action):
-			var event_list: Array = InputMap.get_action_list(action)
+			var event_list: Array = InputMap.action_get_events(action)
 			for input_event in event_list:
 				var should_erase: bool = false
 				if input_event is InputEventJoypadButton:
