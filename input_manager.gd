@@ -1,6 +1,7 @@
 @tool
 extends Node
 
+const input_manager_const = preload("res://addons/input_manager/input_manager.gd")
 const USER_PREFERENCES_SECTION_NAME = "input"
 
 var set_settings_value_callback: Callable = Callable()
@@ -160,7 +161,7 @@ func _joy_connection_changed(p_index: int, p_connected: bool) -> void:
 			call_deferred("add_actions_for_input_device", p_index)
 
 			connected_joypads[p_index] = JoyPadInfo.new(
-				get_joy_type_from_guid(Input.get_joy_guid(p_index))
+				input_manager_const.get_joy_type_from_guid(Input.get_joy_guid(p_index))
 			)
 			connection_status = "connected"
 		else:
@@ -377,7 +378,7 @@ func _ready() -> void:
 		else:
 			for joypad in Input.get_connected_joypads():
 				var guid: String = Input.get_joy_guid(joypad)
-				connected_joypads[joypad] = JoyPadInfo.new(get_joy_type_from_guid(guid))
+				connected_joypads[joypad] = JoyPadInfo.new(input_manager_const.get_joy_type_from_guid(guid))
 				add_actions_for_input_device(joypad)
 
 	else:
