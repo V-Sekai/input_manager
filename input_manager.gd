@@ -22,13 +22,15 @@ var look_y_direction: float = 1.0
 
 const mouse_sensitivity_multiple: float = 10
 
+
 func set_invert_look_x(p_invert_look_x: bool) -> void:
 	invert_look_x = p_invert_look_x
 	if p_invert_look_x:
 		look_x_direction = -1.0
 	else:
 		look_x_direction = 1.0
-		
+
+
 func set_invert_look_y(p_invert_look_y: bool) -> void:
 	invert_look_y = p_invert_look_y
 	if p_invert_look_y:
@@ -36,10 +38,11 @@ func set_invert_look_y(p_invert_look_y: bool) -> void:
 	else:
 		look_y_direction = -1.0
 
-var invert_look_x: bool = false :
+
+var invert_look_x: bool = false:
 	set = set_invert_look_x
 
-var invert_look_y: bool = false :
+var invert_look_y: bool = false:
 	set = set_invert_look_y
 
 var mouse_sensitivity: float = 1.0
@@ -52,6 +55,7 @@ var ingame_input_blocks: int = 0
 const INPUT_UPDATE_RATE = 1.0 / 60
 var input_update_delta: float = 0.0
 
+
 static func get_joy_type_from_guid(p_guid: String):
 	if p_guid == DS4_GUID:
 		return TYPE_DS4
@@ -60,7 +64,7 @@ static func get_joy_type_from_guid(p_guid: String):
 
 
 class JoyPadInfo:
-	const TYPE_UNKNOWN =2
+	const TYPE_UNKNOWN = 2
 	var type: int = TYPE_UNKNOWN
 
 	func _init(p_type: int):
@@ -127,15 +131,12 @@ func clear_all_axes() -> void:
 
 
 func _input(p_event: InputEvent) -> void:
-	if ! Engine.is_editor_hint():
+	if !Engine.is_editor_hint():
 		if p_event is InputEventJoypadMotion:
 			p_event.set_device(-1)
 		if p_event is InputEventMouseMotion:
 			for current_axis in axes:
-				if (
-					current_axis.type == InputAxis.TYPE_MOUSE_MOTION
-					and (current_axis.axis == 0 or current_axis.axis == 1)
-				):
+				if current_axis.type == InputAxis.TYPE_MOUSE_MOTION and (current_axis.axis == 0 or current_axis.axis == 1):
 					if current_axis.axis == 0:
 						axes_values[current_axis.name] = p_event.relative.x * current_axis.sensitivity * mouse_sensitivity * mouse_sensitivity_multiple
 					if current_axis.axis == 1:
@@ -143,53 +144,47 @@ func _input(p_event: InputEvent) -> void:
 
 
 func _process(p_delta: float) -> void:
-	if ! Engine.is_editor_hint():
+	if !Engine.is_editor_hint():
 		input_update_delta += p_delta
-		
+
 		if input_update_delta > INPUT_UPDATE_RATE:
 			update_all_axes()
 			call_deferred("clear_all_axes")
-			
+
 			while input_update_delta > INPUT_UPDATE_RATE:
 				input_update_delta -= INPUT_UPDATE_RATE
 
 
 func _joy_connection_changed(p_index: int, p_connected: bool) -> void:
-	if ! Engine.is_editor_hint():
+	if !Engine.is_editor_hint():
 		var connection_status: String = ""
 		if p_connected:
 			call_deferred("add_actions_for_input_device", p_index)
 
-			connected_joypads[p_index] = JoyPadInfo.new(
-				input_manager_const.get_joy_type_from_guid(Input.get_joy_guid(p_index))
-			)
+			connected_joypads[p_index] = JoyPadInfo.new(input_manager_const.get_joy_type_from_guid(Input.get_joy_guid(p_index)))
 			connection_status = "connected"
 		else:
 			call_deferred("remove_actions_for_input_device", p_index)
 			if connected_joypads.has(p_index):
-				if ! connected_joypads.erase(p_index):
+				if !connected_joypads.erase(p_index):
 					printerr("Could not erased: {index}".format({"index": str(p_index)}))
 				connection_status = "disconnected"
 			else:
 				printerr("Could not erase joypad index: {index}".format({"index": str(p_index)}))
 				connection_status = "invalid disconnect"
 
-		print(
-			"Connection changed: {index} - {connection_status}".format(
-				{"index": str(p_index), "connection_status": connection_status}
-			)
-		)
+		print("Connection changed: {index} - {connection_status}".format({"index": str(p_index), "connection_status": connection_status}))
 
 
 func _enter_tree() -> void:
-	if ! Engine.is_editor_hint():
+	if !Engine.is_editor_hint():
 		var connect_result: int = Input.joy_connection_changed.connect(self._joy_connection_changed, CONNECT_DEFERRED)
 		if connect_result != OK:
 			printerr("joy_connection_changed: could not connect!")
 
 
 func _exit_tree() -> void:
-	if ! Engine.is_editor_hint():
+	if !Engine.is_editor_hint():
 		if Input.joy_connection_changed.is_connected(self._joy_connection_changed):
 			Input.joy_connection_changed.disconnect(self._joy_connection_changed)
 
@@ -205,24 +200,12 @@ func add_new_axes(
 	p_type: int = InputAxis.TYPE_ACTION,
 	p_axis: int = 0
 ):
-	axes.append(
-		InputAxis.new(
-			p_name,
-			p_positive_action,
-			p_negative_action,
-			p_gravity,
-			p_dead_zone,
-			p_sensitivity,
-			p_inverted,
-			p_type,
-			p_axis
-		)
-	)
+	axes.append(InputAxis.new(p_name, p_positive_action, p_negative_action, p_gravity, p_dead_zone, p_sensitivity, p_inverted, p_type, p_axis))
 	axes_values[p_name] = 0.0
 
 
 func set_active(p_active: bool) -> void:
-	if ! Engine.is_editor_hint():
+	if !Engine.is_editor_hint():
 		set_process(p_active)
 		set_process_input(p_active)
 
@@ -237,27 +220,30 @@ func decrement_ingame_input_block() -> void:
 func increment_ingame_input_block() -> void:
 	if ingame_input_blocks == 0:
 		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
-		
+
 	ingame_input_blocks += 1
-	
+
+
 func ingame_input_enabled() -> bool:
 	if ingame_input_blocks > 0:
 		return false
 	else:
 		return true
-		
-		
+
+
 func is_ingame_action_pressed(p_action: String) -> bool:
 	if ingame_input_enabled():
 		return Input.is_action_pressed(p_action)
 	else:
 		return false
-		
+
+
 func is_ingame_action_just_pressed(p_action: String) -> bool:
 	if ingame_input_enabled():
 		return Input.is_action_just_pressed(p_action)
 	else:
 		return false
+
 
 func is_ingame_action_just_released(p_action: String) -> bool:
 	if ingame_input_enabled():
@@ -270,17 +256,14 @@ func add_actions_for_input_device(p_device_id: int) -> void:
 	for callback in input_meta_callback:
 		var result = callback.call(p_device_id)
 		if typeof(result) == TYPE_BOOL:
-			if ! result:
+			if !result:
 				return
 
 	for action in input_meta_actions.keys():
 		for input_meta_event in input_meta_actions[action]:
 			var current_event: InputEvent = null
 
-			if (
-				input_meta_event is InputEventJoypadButton
-				or input_meta_event is InputEventJoypadMotion
-			):
+			if input_meta_event is InputEventJoypadButton or input_meta_event is InputEventJoypadMotion:
 				current_event = input_meta_event.duplicate()
 
 			if current_event:
@@ -292,7 +275,7 @@ func remove_actions_for_input_device(p_device_id: int) -> void:
 	for callback in input_meta_callback:
 		var result = callback.call(p_device_id)
 		if typeof(result) == TYPE_BOOL:
-			if ! result:
+			if !result:
 				return
 
 	for action in InputMap.get_actions():
@@ -332,14 +315,17 @@ func setup_meta_action_input_map() -> void:
 					input_meta_actions[action].push_back(input_event)
 				InputMap.action_erase_event(action, input_event)
 
+
 func set_settings_value(p_key: String, p_value) -> void:
 	if set_settings_value_callback.is_valid():
 		set_settings_value_callback.call(USER_PREFERENCES_SECTION_NAME, p_key, p_value)
+
 
 func set_settings_values():
 	set_settings_value("invert_look_x", invert_look_x)
 	set_settings_value("invert_look_y", invert_look_y)
 	set_settings_value("mouse_sensitivity", mouse_sensitivity)
+
 
 func get_settings_value(p_key: String, p_type: int, p_default):
 	if get_settings_value_callback.is_valid():
@@ -347,32 +333,38 @@ func get_settings_value(p_key: String, p_type: int, p_default):
 	else:
 		return p_default
 
+
 func get_settings_values() -> void:
 	invert_look_x = get_settings_value("invert_look_x", TYPE_BOOL, invert_look_x)
 	invert_look_y = get_settings_value("invert_look_y", TYPE_BOOL, invert_look_y)
 	mouse_sensitivity = get_settings_value("mouse_sensitivity", TYPE_FLOAT, mouse_sensitivity)
 
+
 func is_quitting() -> void:
 	set_settings_values()
 
+
 func assign_set_settings_value_funcref(p_instance: Object, p_function: String) -> void:
 	set_settings_value_callback = Callable(p_instance, p_function)
-	
+
+
 func assign_get_settings_value_funcref(p_instance: Object, p_function: String) -> void:
 	get_settings_value_callback = Callable(p_instance, p_function)
-	
+
+
 func assign_save_settings_funcref(p_instance: Object, p_function: String) -> void:
 	save_settings_callback = Callable(p_instance, p_function)
 
+
 func _ready() -> void:
-	if ! Engine.is_editor_hint():
+	if !Engine.is_editor_hint():
 		setup_meta_action_input_map()
-		
+
 		set_active(true)
-		
+
 		set_invert_look_x(invert_look_x)
 		set_invert_look_y(invert_look_y)
-		
+
 		if Input.get_connected_joypads().size() == 0:
 			pass  # No joypads connected
 		else:
