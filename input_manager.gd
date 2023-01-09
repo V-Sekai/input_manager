@@ -20,7 +20,7 @@ var input_meta_actions: Dictionary = {}
 var look_x_direction: float = 1.0
 var look_y_direction: float = 1.0
 
-const mouse_sensitivity_multiple: float = 10
+const mouse_sensitivity_multiple: float = 1.0
 
 
 func set_invert_look_x(p_invert_look_x: bool) -> void:
