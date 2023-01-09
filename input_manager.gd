@@ -27,16 +27,16 @@ func set_invert_look_x(p_invert_look_x: bool) -> void:
 	invert_look_x = p_invert_look_x
 	if p_invert_look_x:
 		look_x_direction = -1.0
-	else:
-		look_x_direction = 1.0
+		return
+	look_x_direction = 1.0
 
 
 func set_invert_look_y(p_invert_look_y: bool) -> void:
 	invert_look_y = p_invert_look_y
 	if p_invert_look_y:
 		look_y_direction = 1.0
-	else:
-		look_y_direction = -1.0
+		return
+	look_y_direction = -1.0
 
 
 var invert_look_x: bool = false:
@@ -59,8 +59,7 @@ var input_update_delta: float = 0.0
 static func get_joy_type_from_guid(p_guid: String):
 	if p_guid == DS4_GUID:
 		return TYPE_DS4
-	else:
-		return TYPE_XINPUT
+	return TYPE_XINPUT
 
 
 class JoyPadInfo:
@@ -131,62 +130,67 @@ func clear_all_axes() -> void:
 
 
 func _input(p_event: InputEvent) -> void:
-	if !Engine.is_editor_hint():
-		if p_event is InputEventJoypadMotion:
-			p_event.set_device(-1)
-		if p_event is InputEventMouseMotion:
-			for current_axis in axes:
-				if current_axis.type == InputAxis.TYPE_MOUSE_MOTION and (current_axis.axis == 0 or current_axis.axis == 1):
-					if current_axis.axis == 0:
-						axes_values[current_axis.name] = p_event.relative.x * current_axis.sensitivity * mouse_sensitivity * mouse_sensitivity_multiple
-					if current_axis.axis == 1:
-						axes_values[current_axis.name] = p_event.relative.y * current_axis.sensitivity * mouse_sensitivity * mouse_sensitivity_multiple
+	if Engine.is_editor_hint():
+		return
+	if p_event is InputEventJoypadMotion:
+		p_event.set_device(-1)
+	if p_event is InputEventMouseMotion:
+		for current_axis in axes:
+			if current_axis.type == InputAxis.TYPE_MOUSE_MOTION and (current_axis.axis == 0 or current_axis.axis == 1):
+				if current_axis.axis == 0:
+					axes_values[current_axis.name] = p_event.relative.x * current_axis.sensitivity * mouse_sensitivity * mouse_sensitivity_multiple
+				if current_axis.axis == 1:
+					axes_values[current_axis.name] = p_event.relative.y * current_axis.sensitivity * mouse_sensitivity * mouse_sensitivity_multiple
 
 
 func _process(p_delta: float) -> void:
-	if !Engine.is_editor_hint():
-		input_update_delta += p_delta
+	if Engine.is_editor_hint():
+		return
+	input_update_delta += p_delta
+	if input_update_delta <= INPUT_UPDATE_RATE:
+		return
+	update_all_axes()
+	call_deferred("clear_all_axes")
 
-		if input_update_delta > INPUT_UPDATE_RATE:
-			update_all_axes()
-			call_deferred("clear_all_axes")
-
-			while input_update_delta > INPUT_UPDATE_RATE:
-				input_update_delta -= INPUT_UPDATE_RATE
+	while input_update_delta > INPUT_UPDATE_RATE:
+		input_update_delta -= INPUT_UPDATE_RATE
 
 
 func _joy_connection_changed(p_index: int, p_connected: bool) -> void:
-	if !Engine.is_editor_hint():
-		var connection_status: String = ""
-		if p_connected:
-			call_deferred("add_actions_for_input_device", p_index)
+	if Engine.is_editor_hint():
+		return
+	var connection_status: String = ""
+	if p_connected:
+		call_deferred("add_actions_for_input_device", p_index)
 
-			connected_joypads[p_index] = JoyPadInfo.new(input_manager_const.get_joy_type_from_guid(Input.get_joy_guid(p_index)))
-			connection_status = "connected"
+		connected_joypads[p_index] = JoyPadInfo.new(input_manager_const.get_joy_type_from_guid(Input.get_joy_guid(p_index)))
+		connection_status = "connected"
+	else:
+		call_deferred("remove_actions_for_input_device", p_index)
+		if connected_joypads.has(p_index):
+			if !connected_joypads.erase(p_index):
+				printerr("Could not erased: {index}".format({"index": str(p_index)}))
+			connection_status = "disconnected"
 		else:
-			call_deferred("remove_actions_for_input_device", p_index)
-			if connected_joypads.has(p_index):
-				if !connected_joypads.erase(p_index):
-					printerr("Could not erased: {index}".format({"index": str(p_index)}))
-				connection_status = "disconnected"
-			else:
-				printerr("Could not erase joypad index: {index}".format({"index": str(p_index)}))
-				connection_status = "invalid disconnect"
+			printerr("Could not erase joypad index: {index}".format({"index": str(p_index)}))
+			connection_status = "invalid disconnect"
 
-		print("Connection changed: {index} - {connection_status}".format({"index": str(p_index), "connection_status": connection_status}))
+	print("Connection changed: {index} - {connection_status}".format({"index": str(p_index), "connection_status": connection_status}))
 
 
 func _enter_tree() -> void:
-	if !Engine.is_editor_hint():
-		var connect_result: int = Input.joy_connection_changed.connect(self._joy_connection_changed, CONNECT_DEFERRED)
-		if connect_result != OK:
-			printerr("joy_connection_changed: could not connect!")
+	if Engine.is_editor_hint():
+		return
+	var connect_result: int = Input.joy_connection_changed.connect(self._joy_connection_changed, CONNECT_DEFERRED)
+	if connect_result != OK:
+		printerr("joy_connection_changed: could not connect!")
 
 
 func _exit_tree() -> void:
-	if !Engine.is_editor_hint():
-		if Input.joy_connection_changed.is_connected(self._joy_connection_changed):
-			Input.joy_connection_changed.disconnect(self._joy_connection_changed)
+	if Engine.is_editor_hint():
+		return
+	if Input.joy_connection_changed.is_connected(self._joy_connection_changed):
+		Input.joy_connection_changed.disconnect(self._joy_connection_changed)
 
 
 func add_new_axes(
@@ -205,9 +209,10 @@ func add_new_axes(
 
 
 func set_active(p_active: bool) -> void:
-	if !Engine.is_editor_hint():
-		set_process(p_active)
-		set_process_input(p_active)
+	if Engine.is_editor_hint():
+		return
+	set_process(p_active)
+	set_process_input(p_active)
 
 
 func decrement_ingame_input_block() -> void:
@@ -227,29 +232,25 @@ func increment_ingame_input_block() -> void:
 func ingame_input_enabled() -> bool:
 	if ingame_input_blocks > 0:
 		return false
-	else:
-		return true
+	return true
 
 
 func is_ingame_action_pressed(p_action: String) -> bool:
 	if ingame_input_enabled():
 		return Input.is_action_pressed(p_action)
-	else:
-		return false
+	return false
 
 
 func is_ingame_action_just_pressed(p_action: String) -> bool:
 	if ingame_input_enabled():
 		return Input.is_action_just_pressed(p_action)
-	else:
-		return false
+	return false
 
 
 func is_ingame_action_just_released(p_action: String) -> bool:
 	if ingame_input_enabled():
 		return Input.is_action_just_released(p_action)
-	else:
-		return false
+	return false
 
 
 func add_actions_for_input_device(p_device_id: int) -> void:
@@ -300,8 +301,9 @@ func remove_actions_for_input_device(p_device_id: int) -> void:
 
 func assign_input_map_validation_callback(p_node, p_function_name):
 	var func_ref: Callable = Callable(p_node, p_function_name)
-	if func_ref.is_valid():
-		input_meta_callback.push_back(func_ref)
+	if not func_ref.is_valid():
+		return
+	input_meta_callback.push_back(func_ref)
 
 
 func setup_meta_action_input_map() -> void:
@@ -330,8 +332,7 @@ func set_settings_values():
 func get_settings_value(p_key: String, p_type: int, p_default):
 	if get_settings_value_callback.is_valid():
 		return get_settings_value_callback.call(USER_PREFERENCES_SECTION_NAME, p_key, p_type, p_default)
-	else:
-		return p_default
+	return p_default
 
 
 func get_settings_values() -> void:
@@ -357,22 +358,22 @@ func assign_save_settings_funcref(p_instance: Object, p_function: String) -> voi
 
 
 func _ready() -> void:
-	if !Engine.is_editor_hint():
-		setup_meta_action_input_map()
-
-		set_active(true)
-
-		set_invert_look_x(invert_look_x)
-		set_invert_look_y(invert_look_y)
-
-		if Input.get_connected_joypads().size() == 0:
-			pass  # No joypads connected
-		else:
-			for joypad in Input.get_connected_joypads():
-				var guid: String = Input.get_joy_guid(joypad)
-				connected_joypads[joypad] = JoyPadInfo.new(input_manager_const.get_joy_type_from_guid(guid))
-				add_actions_for_input_device(joypad)
-
-	else:
+	if Engine.is_editor_hint():
 		set_process(false)
 		set_physics_process(false)
+		return
+	setup_meta_action_input_map()
+
+	set_active(true)
+
+	set_invert_look_x(invert_look_x)
+	set_invert_look_y(invert_look_y)
+
+	if Input.get_connected_joypads().size() == 0:
+		pass  # No joypads connected
+	else:
+		for joypad in Input.get_connected_joypads():
+			var guid: String = Input.get_joy_guid(joypad)
+			connected_joypads[joypad] = JoyPadInfo.new(input_manager_const.get_joy_type_from_guid(guid))
+			add_actions_for_input_device(joypad)
+
