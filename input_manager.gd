@@ -138,9 +138,13 @@ func _input(p_event: InputEvent) -> void:
 		for current_axis in axes:
 			if current_axis.type == InputAxis.TYPE_MOUSE_MOTION and (current_axis.axis == 0 or current_axis.axis == 1):
 				if current_axis.axis == 0:
-					axes_values[current_axis.name] = p_event.relative.x * current_axis.sensitivity * mouse_sensitivity * mouse_sensitivity_multiple
+					axes_values[current_axis.name] = (
+						p_event.relative.x * current_axis.sensitivity * mouse_sensitivity * mouse_sensitivity_multiple
+					)
 				if current_axis.axis == 1:
-					axes_values[current_axis.name] = p_event.relative.y * current_axis.sensitivity * mouse_sensitivity * mouse_sensitivity_multiple
+					axes_values[current_axis.name] = (
+						p_event.relative.y * current_axis.sensitivity * mouse_sensitivity * mouse_sensitivity_multiple
+					)
 
 
 func _process(p_delta: float) -> void:
@@ -163,7 +167,9 @@ func _joy_connection_changed(p_index: int, p_connected: bool) -> void:
 	if p_connected:
 		call_deferred("add_actions_for_input_device", p_index)
 
-		connected_joypads[p_index] = JoyPadInfo.new(input_manager_const.get_joy_type_from_guid(Input.get_joy_guid(p_index)))
+		connected_joypads[p_index] = JoyPadInfo.new(
+			input_manager_const.get_joy_type_from_guid(Input.get_joy_guid(p_index))
+		)
 		connection_status = "connected"
 	else:
 		call_deferred("remove_actions_for_input_device", p_index)
@@ -175,7 +181,11 @@ func _joy_connection_changed(p_index: int, p_connected: bool) -> void:
 			printerr("Could not erase joypad index: {index}".format({"index": str(p_index)}))
 			connection_status = "invalid disconnect"
 
-	print("Connection changed: {index} - {connection_status}".format({"index": str(p_index), "connection_status": connection_status}))
+	print(
+		"Connection changed: {index} - {connection_status}".format(
+			{"index": str(p_index), "connection_status": connection_status}
+		)
+	)
 
 
 func _enter_tree() -> void:
@@ -204,7 +214,19 @@ func add_new_axes(
 	p_type: int = InputAxis.TYPE_ACTION,
 	p_axis: int = 0
 ):
-	axes.append(InputAxis.new(p_name, p_positive_action, p_negative_action, p_gravity, p_dead_zone, p_sensitivity, p_inverted, p_type, p_axis))
+	axes.append(
+		InputAxis.new(
+			p_name,
+			p_positive_action,
+			p_negative_action,
+			p_gravity,
+			p_dead_zone,
+			p_sensitivity,
+			p_inverted,
+			p_type,
+			p_axis
+		)
+	)
 	axes_values[p_name] = 0.0
 
 
@@ -376,4 +398,3 @@ func _ready() -> void:
 			var guid: String = Input.get_joy_guid(joypad)
 			connected_joypads[joypad] = JoyPadInfo.new(input_manager_const.get_joy_type_from_guid(guid))
 			add_actions_for_input_device(joypad)
-
